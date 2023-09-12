@@ -23,14 +23,16 @@ class RegistrationTaskTest {
     void taskWork1() {
         final Task task = TaskHolder.getTask("REGISTRATION");
         final Map<String, Object> joinRequestBody = Map.of(
-                "email", String.format("random%d@gmail.com", new Random().nextInt(999999999)),
-                "password", "password123!",
-                "nickname", "nickname2",
-                "deviceToken", "testDeviceToken"
+                Task.EMAIL, String.format("random%d@gmail.com", new Random().nextInt(999999999)),
+                Task.PASSWORD, "password123!",
+                Task.NICKNAME, String.format("randomNickname%d", new Random().nextInt(99)),
+                Task.DEVICE_TOKEN, "testDeviceToken"
         );
 
         final Map<String, Object> response = task.execute(joinRequestBody);
 
-        SoftAssertions.assertSoftly(softAssertions -> softAssertions.assertThat(response.get("status")).isEqualTo(HttpStatus.CREATED));
+        SoftAssertions
+                .assertSoftly(softAssertions -> softAssertions.assertThat(response.get(Task.STATUS))
+                        .isEqualTo(HttpStatus.CREATED));
     }
 }

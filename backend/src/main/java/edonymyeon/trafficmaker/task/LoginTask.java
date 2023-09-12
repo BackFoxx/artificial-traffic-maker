@@ -2,7 +2,7 @@ package edonymyeon.trafficmaker.task;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import edonymyeon.trafficmaker.task.dto.RegistrationRequest;
+import edonymyeon.trafficmaker.task.dto.LoginRequest;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -19,17 +19,17 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
-@RequiredArgsConstructor
 @Component
-public class RegistrationTask extends Task {
+@RequiredArgsConstructor
+public class LoginTask extends Task {
 
+    public static final String AUTHORIZATION = "Authorization";
     private final ObjectMapper objectMapper;
 
-    private static final String REGISTRATION_PATH = "/join";
+    public static final String REGISTRATION_PATH = "/login";
 
     @Override
     public Map<String, Object> execute(final Map<String, Object> resource) {
-
         final RestTemplate restTemplate = new RestTemplate();
         final HttpHeaders httpHeaders = makeHeader();
         final String requestBody = makeRequestBody(resource);
@@ -42,23 +42,26 @@ public class RegistrationTask extends Task {
                     entity,
                     String.class
             );
-            return Map.of(STATUS, HttpStatus.valueOf(response.getStatusCode().value()));
+            return Map.of(
+                    STATUS, HttpStatus.valueOf(response.getStatusCode().value()),
+                    AUTHORIZATION, response.getHeaders().get(AUTHORIZATION)
+            );
 
         } catch (HttpClientErrorException e) {
             log.error(e.getMessage(), e);
             return Map.of(STATUS, HttpStatus.valueOf(e.getStatusCode().value()));
         }
+
     }
 
     private String makeRequestBody(final Map<String, Object> resource) {
         try {
-            final RegistrationRequest registrationRequest = new RegistrationRequest(
+            final LoginRequest loginRequest = new LoginRequest(
                     (String) resource.get(EMAIL),
                     (String) resource.get(PASSWORD),
-                    (String) resource.get(NICKNAME),
                     (String) resource.get(DEVICE_TOKEN)
             );
-            return objectMapper.writeValueAsString(registrationRequest);
+            return objectMapper.writeValueAsString(loginRequest);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException(e);
         }
