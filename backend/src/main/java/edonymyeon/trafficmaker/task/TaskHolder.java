@@ -1,11 +1,13 @@
 package edonymyeon.trafficmaker.task;
 
-import java.util.Map;
-import java.util.Optional;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Arrays;
+import java.util.Objects;
 
 public enum TaskHolder {
 
-    REGISTRATION("REGISTRATION", new RegistrationTask());
+    REGISTRATION("REGISTRATION", new RegistrationTask(new ObjectMapper())),
+    LOGIN("LOGIN", new LoginTask(new ObjectMapper()));
 
     private final String name;
 
@@ -16,12 +18,11 @@ public enum TaskHolder {
         this.task = task;
     }
 
-    private static final Map<String, Task> tasks = Map.of(
-            REGISTRATION.name, REGISTRATION.task
-    );
-
     public static Task getTask(String taskName) {
-        return Optional.ofNullable(tasks.get(taskName))
-                .orElseThrow(() -> new IllegalArgumentException("Not Existing task name."));
+
+        return Arrays.stream(values()).filter(task -> Objects.equals(task.name, taskName))
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("Not Existing task name."))
+                .task;
     }
 }
