@@ -13,7 +13,7 @@ import org.springframework.http.HttpStatus;
 class LoginTaskTest {
 
     @Autowired
-    LoginTask loginTask;
+    private LoginTask loginTask;
 
     @Test
     @DisplayName("회원가입한 정보를 가지고 로그인 작업을 실행한다")
@@ -28,6 +28,6 @@ class LoginTaskTest {
         final Map<String, Object> response = loginTask.execute(resource);
 
         assertThat(response.get(Task.STATUS)).isEqualTo(HttpStatus.OK);
-        assertThat(response.get(LoginTask.AUTHORIZATION)).isNotNull();
+        assertThat(response.get(LoginTask.JSESSIONID)).isNotNull();
     }
 }
