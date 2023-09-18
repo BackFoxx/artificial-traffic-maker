@@ -3,6 +3,7 @@ package edonymyeon.trafficmaker.task;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edonymyeon.trafficmaker.task.dto.LoginRequest;
+import edonymyeon.trafficmaker.task.exception.LoginFailedException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,7 @@ import org.springframework.web.client.RestTemplate;
 @RequiredArgsConstructor
 public class LoginTask extends Task {
 
-    public static final String AUTHORIZATION = "Authorization";
+    public static final String JSESSIONID = "JSESSIONID";
     private final ObjectMapper objectMapper;
 
     public static final String REGISTRATION_PATH = "/login";
@@ -34,6 +35,11 @@ public class LoginTask extends Task {
         final HttpHeaders httpHeaders = makeHeader();
         final String requestBody = makeRequestBody(resource);
 
+        return sendRequest(restTemplate, httpHeaders, requestBody);
+    }
+
+    private static Map<String, Object> sendRequest(final RestTemplate restTemplate,
+                                                          final HttpHeaders httpHeaders, final String requestBody) {
         try {
             final HttpEntity<String> entity = new HttpEntity<>(requestBody, httpHeaders);
             final ResponseEntity<String> response = restTemplate.exchange(
@@ -42,16 +48,20 @@ public class LoginTask extends Task {
                     entity,
                     String.class
             );
-            return Map.of(
-                    STATUS, HttpStatus.valueOf(response.getStatusCode().value()),
-                    AUTHORIZATION, response.getHeaders().get(AUTHORIZATION)
-            );
 
+            final HttpStatus httpStatus = HttpStatus.valueOf(response.getStatusCode().value());
+            if (httpStatus.is2xxSuccessful()) {
+                return Map.of(
+                        STATUS, httpStatus,
+                        JSESSIONID, response.getHeaders().get("Set-Cookie").get(0).replace("JSESSIONID=", "")
+                );
+            }
+
+            throw new LoginFailedException();
         } catch (HttpClientErrorException e) {
             log.error(e.getMessage(), e);
             return Map.of(STATUS, HttpStatus.valueOf(e.getStatusCode().value()));
         }
-
     }
 
     private String makeRequestBody(final Map<String, Object> resource) {
